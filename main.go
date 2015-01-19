@@ -17,16 +17,14 @@ func main() {
     var d = flag.String("d", "\t", "demilter. default \t")
     flag.Parse()
 
-    // 
+    // argc
     if flag.NArg() > 0 {
         fmt.Printf("error:illegale args.\n")
         os.Exit(1)
     }
 
     // arg f
-    if *f == "" {
-        fmt.Printf("f is empty. \n")
-    } else {
+    if *f != "" {
         if strings.Index(*f, "-") == 0 {
             fmt.Printf("f is  %v\n", *f)
             os.Exit(1)
@@ -47,13 +45,11 @@ func main() {
 
     // arg k
     tkarray := strings.Split(*k, ",")
-    fmt.Printf("tkarray len is %d\n", len(tkarray))
     var karray = make([]int, len(tkarray))
     for i, kv := range tkarray {
         ikv, _ := strconv.Atoi(kv)
         karray[i] = ikv
     }
-    fmt.Println(karray)
     // arg v
     tvarray := strings.Split(*v, ",")
     var varray = make([]int, len(tvarray))
@@ -68,7 +64,6 @@ func main() {
     var lkmap = make(map[int]string)
     var vmap = make(map[int]int)
 
-    fmt.Println("start-->")
     scanner := bufio.NewScanner(fp)
     for scanner.Scan() {
         val := scanner.Text()
@@ -90,7 +85,6 @@ func main() {
         val := scanner.Text()
         inarray = strings.SplitN(val, *d, 100)
         for _, k := range karray {
-            fmt.Printf("k : %v, v: %v\n",k, inarray[k-1])
             kmap[k] = inarray[k-1]
         }
         if comparemap(kmap, lkmap) {
@@ -101,6 +95,7 @@ func main() {
             cnt++
         } else {
             disp(lkmap,vmap)
+            fmt.Printf("\n")
             for _, k := range varray {
                 v, _ := strconv.Atoi(inarray[k-1])
                 vmap[k] = v
@@ -108,14 +103,13 @@ func main() {
             cnt = 0
         }
         mapcopy(lkmap, kmap)
-    fmt.Println(lkmap)
 
     }
-    fmt.Println(lkmap)
     disp(lkmap,vmap)
     if *c {
-        fmt.Println(cnt)
+        fmt.Printf("\t%d", cnt)
     }
+    fmt.Printf("\n")
     if err := scanner.Err(); err != nil {
         panic(err)
     }
@@ -150,5 +144,4 @@ func disp(kmap map[int]string, vmap map[int]int) {
     for _, v := range vmap {
         fmt.Printf("%d", v)
     }
-    fmt.Printf("\n")
 }
