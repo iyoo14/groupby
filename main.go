@@ -1,147 +1,164 @@
 package main
 
 import (
-    "fmt"
-    "bufio"
-    "os"
-    "flag"
-    "strings"
-    "strconv"
-    )
+	"bufio"
+	"flag"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
 
 func main() {
-    var f = flag.String("f", "", "file path.")
-    var c = flag.Bool("c", false, "disp count for bool")
-    var k = flag.String("k", "1", " target keys index. default 1")
-    var v = flag.String("v", "2", " target values index. default 2")
-    var d = flag.String("d", "\t", "demilter. default \t")
-    flag.Parse()
+	var f = flag.String("f", "", "file path.")
+	var c = flag.Bool("c", false, "disp count for bool")
+	var t = flag.Bool("t", false, "disp total for bool")
+	var s = flag.Bool("s", false, "disp sum for bool")
+	var k = flag.String("k", "1", " target keys index. default 1")
+	var v = flag.String("v", "2", " target values index. default 2")
+	var d = flag.String("d", "\t", "demilter. default \t")
+	flag.Parse()
 
-    // argc
-    if flag.NArg() > 0 {
-        fmt.Printf("error:illegale args.\n")
-        os.Exit(1)
-    }
+	// argc
+	if flag.NArg() > 0 {
+		fmt.Printf("error:illegale args.\n")
+		os.Exit(1)
+	}
 
-    // arg f
-    if *f != "" {
-        if strings.Index(*f, "-") == 0 {
-            fmt.Printf("f is  %v\n", *f)
-            os.Exit(1)
-        }
-    }
-    var fp *os.File
-    var err error
+	// arg f
+	if *f != "" {
+		if strings.Index(*f, "-") == 0 {
+			fmt.Printf("f is  %v\n", *f)
+			os.Exit(1)
+		}
+	}
+	var fp *os.File
+	var err error
 
-    if *f == "" {
-        fp = os.Stdin
-    } else {
-        fp, err = os.Open(*f)
-        if err != nil {
-            panic(err)
-        }
-        defer fp.Close()
-    }
+	if *f == "" {
+		fp = os.Stdin
+	} else {
+		fp, err = os.Open(*f)
+		if err != nil {
+			panic(err)
+		}
+		defer fp.Close()
+	}
 
-    // arg k
-    tkarray := strings.Split(*k, ",")
-    var karray = make([]int, len(tkarray))
-    for i, kv := range tkarray {
-        ikv, _ := strconv.Atoi(kv)
-        karray[i] = ikv
-    }
-    // arg v
-    tvarray := strings.Split(*v, ",")
-    var varray = make([]int, len(tvarray))
-    for i, vv := range tvarray {
-        ivv, _ := strconv.Atoi(vv)
-        varray[i] = ivv
-    }
+	// arg k
+	tkarray := strings.Split(*k, ",")
+	var karray = make([]int, len(tkarray))
+	for i, kv := range tkarray {
+		ikv, _ := strconv.Atoi(kv)
+		karray[i] = ikv
+	}
+	// arg v
+	tvarray := strings.Split(*v, ",")
+	var varray = make([]int, len(tvarray))
+	for i, vv := range tvarray {
+		ivv, _ := strconv.Atoi(vv)
+		varray[i] = ivv
+	}
 
-    var inarray []string
-    var cnt int = 0
-    var kmap = make(map[int]string)
-    var lkmap = make(map[int]string)
-    var vmap = make(map[int]int)
+	var inarray []string
+	var cnt int = 0
+	var kmap = make(map[int]string)
+	var lkmap = make(map[int]string)
+	var vmap = make(map[int]int)
+	var total int = 0
+	var sum int = 0
 
-    scanner := bufio.NewScanner(fp)
-    for scanner.Scan() {
-        val := scanner.Text()
-        inarray = strings.SplitN(val, *d, 100)
-        for _, k := range karray {
-            kmap[k] = inarray[k-1]
-        }
-        mapcopy(lkmap, kmap)
+	scanner := bufio.NewScanner(fp)
+	for scanner.Scan() {
+		val := scanner.Text()
+		inarray = strings.SplitN(val, *d, 100)
+		for _, k := range karray {
+			kmap[k] = inarray[k-1]
+		}
+		mapcopy(lkmap, kmap)
 
-        for _, k := range varray {
-            v, _ := strconv.Atoi(inarray[k-1])
-            vmap[k] = v
-        }
+		for _, k := range varray {
+			v, _ := strconv.Atoi(inarray[k-1])
+			vmap[k] = v
+			sum += v
+		}
 
-        cnt++
-        break
-    }
-    for scanner.Scan() {
-        val := scanner.Text()
-        inarray = strings.SplitN(val, *d, 100)
-        for _, k := range karray {
-            kmap[k] = inarray[k-1]
-        }
-        if comparemap(kmap, lkmap) {
-            for _, k := range varray {
-                v, _ := strconv.Atoi(inarray[k-1])
-                vmap[k] += v
-            }
-            cnt++
-        } else {
-            disp(lkmap,vmap)
-            fmt.Printf("\n")
-            for _, k := range varray {
-                v, _ := strconv.Atoi(inarray[k-1])
-                vmap[k] = v
-            }
-            cnt = 0
-        }
-        mapcopy(lkmap, kmap)
+		cnt++
+		break
+	}
+	for scanner.Scan() {
+		val := scanner.Text()
+		inarray = strings.SplitN(val, *d, 100)
+		for _, k := range karray {
+			kmap[k] = inarray[k-1]
+		}
+		if comparemap(kmap, lkmap) {
+			for _, k := range varray {
+				v, _ := strconv.Atoi(inarray[k-1])
+				vmap[k] += v
+				sum += v
+			}
+			cnt++
+		} else {
+			disp(lkmap, vmap)
+			if *c {
+				fmt.Printf("\t%d", cnt)
+			}
+			total += cnt
+			cnt = 0
+			fmt.Printf("\n")
+			for _, k := range varray {
+				v, _ := strconv.Atoi(inarray[k-1])
+				vmap[k] = v
+				sum += v
+			}
+		}
+		mapcopy(lkmap, kmap)
 
-    }
-    disp(lkmap,vmap)
-    if *c {
-        fmt.Printf("\t%d", cnt)
-    }
-    fmt.Printf("\n")
-    if err := scanner.Err(); err != nil {
-        panic(err)
-    }
+	}
+	disp(lkmap, vmap)
+	if *c {
+		fmt.Printf("\t%d", cnt)
+	}
+	if *s {
+		fmt.Printf("\t%d", sum)
+	}
+	if *t {
+		fmt.Printf("\t%d", total)
+	}
+	fmt.Printf("\n")
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
 }
 
 func mapcopy(dst map[int]string, src map[int]string) {
-    for k, v := range src {
-        dst[k] = v
-    }
+	for k, v := range src {
+		dst[k] = v
+	}
 }
 
 func comparemap(amap map[int]string, bmap map[int]string) bool {
-    for k, v := range amap {
-        if v != bmap[k] {
-            return false
-        }
-    }
-    return true
+	for k, v := range amap {
+		if v != bmap[k] {
+			return false
+		}
+	}
+	return true
 }
 
 func initmap(amap map[int]int) {
-    for k, _ := range amap {
-        amap[k] = 0
-    }
+	for k, _ := range amap {
+		amap[k] = 0
+	}
 }
 
 func disp(kmap map[int]string, vmap map[int]int) {
-    for _, v := range kmap {
-        fmt.Printf("%s", v)
-    }
-    fmt.Printf("\t")
-    for _, v := range vmap {
-        fmt.Printf("%d", v)
-    }
+	for _, v := range kmap {
+		fmt.Printf("%s", v)
+	}
+	fmt.Printf("\t")
+	for _, v := range vmap {
+		fmt.Printf("%d", v)
+	}
 }
